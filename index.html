@@ -1483,43 +1483,53 @@
       const seenKey = 'numble_seen_draw_' + lastDraw.draw_id;
       if (localStorage.getItem(seenKey)) return; // already shown
 
-      // Check if user had any entries in that draw
-      const hist = await api('GET', '/entries/history?limit=50');
-      if (!hist || !hist.entries) return;
-
-      const drawEntries = hist.entries.filter(e =>
-        (e.draws?.draw_id || e.draw_id) === lastDraw.draw_id
-      );
-      if (drawEntries.length === 0) return;
-
-      // Determine result
+      // Determine result — check entries if user had any, otherwise show the number anyway
       const winning = lastDraw.winning_number;
       let title, detail, winType = 'none';
 
-      for (const entry of drawEntries) {
-        const num = entry.number;
-        const numSorted = num.split('').sort().join('');
-        const posMatches = num.split('').filter((c, i) => c === winning[i]).length;
-        const prizes = getPrizes(entry.subscription_at_entry);
-
-        if (num === winning) {
-          title = `🏆 EXACT MATCH — $${prizes.exact.toLocaleString()}!`;
-          detail = `The winning number was ${winning}. Your entry matched exactly!`;
-          winType = 'jackpot'; break;
-        } else if (numSorted === winSorted) {
-          title = `🎯 ALL DIGITS — $${prizes.anagram}`;
-          detail = `The winning number was ${winning}. Right digits, wrong order.`;
-          winType = 'partial'; break;
-        } else if (posMatches === 2) {
-          title = `✌️ 2 IN PLACE — +1 Token`;
-          detail = `The winning number was ${winning}. 2 digits in position!`;
-          winType = 'token'; break;
+      // Try to fetch user's entries for that draw
+      let drawEntries = [];
+      try {
+        const hist = await api('GET', '/entries/history?limit=50');
+        if (hist && hist.entries) {
+          drawEntries = hist.entries.filter(e =>
+            (e.draws?.draw_id || e.draw_id) === lastDraw.draw_id
+          );
         }
-      }
+      } catch(e) {}
 
-      if (winType === 'none') {
-        title = 'No win this week';
-        detail = `The winning number was ${winning}. Better luck next week!`;
+      if (drawEntries.length > 0) {
+        // User had entries — check for a win
+        for (const entry of drawEntries) {
+          const num = entry.number;
+          const numSorted = num.split('').sort().join('');
+          const winSorted = winning.split('').sort().join('');
+          const posMatches = num.split('').filter((c, i) => c === winning[i]).length;
+          const prizes = getPrizes(entry.subscription_at_entry);
+
+          if (num === winning) {
+            title = `🏆 EXACT MATCH — $${prizes.exact.toLocaleString()}!`;
+            detail = `The winning number was ${winning}. Your entry matched exactly!`;
+            winType = 'jackpot'; break;
+          } else if (numSorted === winSorted) {
+            title = `🎯 ALL DIGITS — $${prizes.anagram}`;
+            detail = `The winning number was ${winning}. Right digits, wrong order.`;
+            winType = 'partial'; break;
+          } else if (posMatches === 2) {
+            title = `✌️ 2 IN PLACE — +1 Token`;
+            detail = `The winning number was ${winning}. 2 digits in position!`;
+            winType = 'token'; break;
+          }
+        }
+        if (winType === 'none') {
+          title = 'No win this week';
+          detail = `The winning number was ${winning}. Better luck next week!`;
+        }
+      } else {
+        // User had no entries this week — still show the reveal
+        title = 'This week\'s number';
+        detail = `The winning number was ${winning}. Enter next week for your chance to win!`;
+        winType = 'none';
       }
 
       // Mark as seen before showing (so refresh doesn't re-trigger)
