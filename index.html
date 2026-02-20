@@ -435,6 +435,7 @@
     color: var(--red);
     text-transform: uppercase;
   }
+  .plan-btn.selected { border-color: var(--gold) !important; color: var(--gold) !important; background: #1a1400 !important; }
 
   /* Result banner */
   .result-banner {
@@ -709,98 +710,11 @@
   .copy-btn:hover { border-color: var(--text); color: var(--text); }
 
   /* Demo draw button */
-  .test-draw-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: none;
-    border: 1px dashed var(--border);
-    color: var(--muted);
-    padding: 10px 16px;
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 4px;
-    width: 100%;
-    justify-content: center;
-    transition: all 0.2s;
-    margin-top: 12px;
-  }
-  .test-draw-btn:hover { border-color: var(--muted); color: var(--text); }
 
   @media (max-width: 400px) {
     .digit-box { width: 60px; height: 72px; font-size: 2.4rem; }
   }
 
-
-  /* ======== TEST MODE PANEL ======== */
-  #testmode-bar {
-    display: none;
-    width: 100%;
-    max-width: 480px;
-    background: #080808;
-    border: 1px solid #1c1c1c;
-    border-top: 2px solid #0f0;
-    margin-bottom: 8px;
-  }
-  #testmode-bar.visible { display: block; }
-  .tm-header {
-    display: flex; align-items: center;
-    justify-content: space-between;
-    padding: 9px 14px; cursor: pointer; user-select: none;
-  }
-  .tm-badge {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 0.68rem; letter-spacing: 0.18em;
-    text-transform: uppercase; color: #0f0; font-family: monospace;
-  }
-  .tm-badge-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: #0f0; box-shadow: 0 0 6px #0f0;
-    animation: tmBlink 1.4s infinite;
-  }
-  @keyframes tmBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .tm-arrow { font-size:0.65rem; color:#444; transition:transform 0.2s; font-family:monospace; }
-  .tm-arrow.open { transform: rotate(180deg); }
-  .tm-body {
-    display: none; padding: 0 14px 14px;
-    flex-direction: column; gap: 12px;
-    border-top: 1px solid #181818;
-  }
-  .tm-body.open { display: flex; }
-  .tm-section-label {
-    font-size: 0.62rem; letter-spacing: 0.18em;
-    text-transform: uppercase; color: #444;
-    font-family: monospace; margin-bottom: 4px; padding-top: 8px;
-  }
-  .tm-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .tm-btn {
-    background: #0d0d0d; border: 1px solid #222; color: #777;
-    padding: 7px 12px; font-size: 0.72rem; font-family: monospace;
-    border-radius: 3px; cursor: pointer; transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .tm-btn:hover { border-color: #0f0; color: #0f0; }
-  .tm-btn.active { border-color: #0f0; color: #0f0; background: #091209; }
-  .tm-btn.danger:hover { border-color: #ff2d2d; color: #ff2d2d; }
-  .tm-outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .tm-outcome-btn {
-    background: #0d0d0d; border: 1px solid #222; color: #555;
-    padding: 10px 8px; font-size: 0.7rem; font-family: monospace;
-    border-radius: 3px; cursor: pointer; transition: all 0.15s;
-    text-align: center; line-height: 1.5;
-  }
-  .tm-outcome-btn:hover { border-color: #444; color: #aaa; }
-  .tm-outcome-btn.selected { border-color: #0f0; color: #0f0; background: #091209; }
-  .tm-status {
-    font-family: monospace; font-size: 0.7rem; color: #444;
-    padding: 7px 10px; background: #050505;
-    border: 1px solid #181818; border-radius: 3px; line-height: 1.7;
-  }
-  .tm-status .ok { color: #0f0; }
-  .tm-status .warn { color: #ffaa00; }
-  .tm-status .info { color: #0af; }
 
   /* ======== BALLOON REVEAL OVERLAY ======== */
   #balloon-overlay {
@@ -1015,77 +929,6 @@
 </header>
 
 
-<!-- ======== TEST MODE PANEL ======== -->
-<div id="testmode-bar">
-  <div class="tm-header" onclick="tmToggle()">
-    <div class="tm-badge">
-      <div class="tm-badge-dot"></div>
-      TEST MODE
-    </div>
-    <span class="tm-arrow" id="tm-arrow">▼</span>
-  </div>
-  <div class="tm-body" id="tm-body">
-
-    <div>
-      <div class="tm-section-label">⏩ Time Control</div>
-      <div class="tm-row">
-        <button class="tm-btn" onclick="tmFastForward()">Jump to Draw Now</button>
-        <button class="tm-btn" onclick="tmResetTimer()">Reset Timer</button>
-      </div>
-      <div class="tm-status" id="tm-clock-status" style="margin-top:8px;">
-        Real time: <span class="info" id="tm-real-time">—</span><br>
-        Simulated: <span class="ok" id="tm-sim-time">—</span><br>
-        State: <span id="tm-time-state">normal</span>
-      </div>
-    </div>
-
-    <div>
-      <div class="tm-section-label">🏆 Force Outcome</div>
-      <div class="tm-outcome-grid">
-        <button class="tm-outcome-btn" id="tmo-random" onclick="tmSetOutcome('random')">
-          🎲 Random<br><span style="color:#555;font-size:0.65rem;">as normal</span>
-        </button>
-        <button class="tm-outcome-btn" id="tmo-jackpot" onclick="tmSetOutcome('jackpot')">
-          🏆 Jackpot<br><span style="color:#555;font-size:0.65rem;">$1,000 exact</span>
-        </button>
-        <button class="tm-outcome-btn" id="tmo-partial" onclick="tmSetOutcome('partial')">
-          🎯 Partial<br><span style="color:#555;font-size:0.65rem;">$100 anagram</span>
-        </button>
-        <button class="tm-outcome-btn" id="tmo-token" onclick="tmSetOutcome('token')">
-          🎟️ Token<br><span style="color:#555;font-size:0.65rem;">+1 free token</span>
-        </button>
-        <button class="tm-outcome-btn" id="tmo-lose" onclick="tmSetOutcome('lose')" style="grid-column:span 2;">
-          ❌ No Win<br><span style="color:#555;font-size:0.65rem;">no match</span>
-        </button>
-      </div>
-      <div class="tm-status" id="tm-outcome-status" style="margin-top:8px;">
-        Forced outcome: <span class="ok" id="tm-forced-label">RANDOM</span>
-      </div>
-    </div>
-
-    <div>
-      <div class="tm-section-label">👤 Subscription</div>
-      <div class="tm-row">
-        <button class="tm-btn" id="tm-sub-free" onclick="tmSetSub('free')">Free (1 token)</button>
-        <button class="tm-btn" id="tm-sub-paid" onclick="tmSetSub('paid')">⭐ Paid (3 tokens)</button>
-      </div>
-    </div>
-    <div>
-      <div class="tm-section-label">🔧 State Controls</div>
-      <div class="tm-row">
-        <button class="tm-btn danger" onclick="tmResetWeek()">Reset Week</button>
-        <button class="tm-btn danger" onclick="tmAddTokens()">+3 Tokens</button>
-        <button class="tm-btn danger" onclick="tmClearPending()">Clear Pending Reveal</button>
-      </div>
-      <div class="tm-status" style="margin-top:8px;">
-        Tokens: <span class="ok" id="tm-token-count">—</span> &nbsp;|&nbsp;
-        Entries: <span class="ok" id="tm-entry-count">—</span> &nbsp;|&nbsp;
-        Pending reveal: <span id="tm-pending-label">—</span>
-      </div>
-    </div>
-
-  </div>
-</div>
 
 <main>
   <!-- REGISTRATION -->
@@ -1114,14 +957,14 @@
           <input type="text" id="reg-referral" placeholder="Enter code if you have one" autocomplete="off" autocapitalize="off">
         </div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <div class="tm-section-label" style="color:var(--muted);padding-top:0;">Choose your plan</div>
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding-top:0;">Choose your plan</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="plan-selector">
-            <button class="tm-outcome-btn" id="plan-free" onclick="selectPlan('free')" style="border-color:#333;color:#888;padding:14px 8px;font-family:var(--body);font-size:0.82rem;">
+            <button class="plan-btn" id="plan-free" onclick="selectPlan('free')" style="background:#111;border:1px solid #333;border-radius:6px;cursor:pointer;text-align:center;transition:border-color 0.15s,color 0.15s;border-color:#333;color:#888;padding:14px 8px;font-family:var(--body);font-size:0.82rem;">
               <div style="font-size:1rem;margin-bottom:4px;">🆓</div>
               <div style="font-weight:700;color:#aaa;">Free</div>
               <div style="font-size:0.7rem;color:#555;margin-top:4px;">1 free token/month<br>Up to $50</div>
             </button>
-            <button class="tm-outcome-btn" id="plan-paid" onclick="selectPlan('paid')" style="padding:14px 8px;font-family:var(--body);font-size:0.82rem;">
+            <button class="plan-btn" id="plan-paid" onclick="selectPlan('paid')" style="background:#111;border:1px solid #333;border-radius:6px;cursor:pointer;text-align:center;transition:border-color 0.15s,color 0.15s;padding:14px 8px;font-family:var(--body);font-size:0.82rem;">
               <div style="font-size:1rem;margin-bottom:4px;">⭐</div>
               <div style="font-weight:700;color:var(--gold);">Subscriber</div>
               <div style="font-size:0.7rem;color:#887733;margin-top:4px;">1 free + 3 bonus tokens<br>Up to $1,000</div>
@@ -1187,8 +1030,6 @@
 
     <button class="btn" id="submit-btn" onclick="submitGuess()" disabled>Submit Entry</button>
 
-    <!-- Dev-only simulate button hidden for now -->
-    <!-- <button class="test-draw-btn" onclick="performDraw()">⚡ Simulate Weekly Draw (Demo)</button> -->
 
     <div class="entries-section" id="entries-section" style="display:none;">
       <div class="section-title">Your Entries This Week</div>
@@ -1428,7 +1269,6 @@
 <script>
   // ── CONFIG ──
   const API = 'https://numble-production.up.railway.app'; // v2
-  const DEMO_INFINITE_TOKENS = true; // TODO: remove before launch
 
   // Clear stale session if ?logout=1 or ?clear=1 in URL
   if (/[?&](logout|clear)=1/.test(window.location.search)) {
@@ -1447,8 +1287,7 @@
     guesses: [],
     drawId: null,
     currentInput: '',
-    pendingReveal: null,
-    leaderboard: []
+        leaderboard: []
   };
 
   // ── API HELPERS ──
@@ -1641,10 +1480,6 @@
       await hydrateState();
       updateUI();
       updateGameView();
-      if (state.pendingReveal) {
-        const { winning, title, detail, winType } = state.pendingReveal;
-        setTimeout(() => openBalloonReveal(winning, title, detail, winType), 700);
-      }
     }
   }
 
@@ -1689,7 +1524,6 @@
 
   async function submitGuess() {
     const g = state.currentInput;
-    if (DEMO_INFINITE_TOKENS) state.tokens = 99;
     if (g.length !== 3 || state.tokens <= 0) return;
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
@@ -1703,7 +1537,7 @@
         return;
       }
       state.guesses.push(g);
-      state.tokens = DEMO_INFINITE_TOKENS ? 99 : (data.token_balance ?? state.tokens - 1);
+      state.tokens = data.token_balance ?? state.tokens - 1;
       state.currentInput = '';
       renderDigits();
       updateUI();
@@ -1730,55 +1564,6 @@
   }
 
   // ── DRAW SIMULATION (Test Mode only) ──
-  async function performDraw() {
-    if (state.guesses.length === 0) { showToast('Submit at least one entry first!'); return; }
-    // Admin secret pre-filled for demo builds
-    const adminSecret = document.getElementById('tm-admin-secret')?.value || '306b4c7b791f2ce1dfa11a979fdc7c92f8600d2cee2fb8c0';
-    try {
-      const res = await fetch(API + '/admin/draw', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-admin-secret': adminSecret,
-          'Authorization': 'Bearer ' + getToken()
-        }
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Draw failed');
-      const winning = data.winning_number || '000';
-      const prizes = getPrizes();
-      let title, detail, winType = 'none';
-      for (const guess of state.guesses) {
-        if (guess === winning) {
-          title = `🏆 EXACT MATCH — $${prizes.exact}!`;
-          detail = `The winning number was ${winning}. Your entry matched exactly!`;
-          winType = 'jackpot'; break;
-        } else if ([...guess].sort().join('') === [...winning].sort().join('')) {
-          title = `🎯 ALL DIGITS — $${prizes.anagram}`;
-          detail = `The winning number was ${winning}. Right digits, wrong order.`;
-          winType = 'partial'; break;
-        } else {
-          const matches = guess.split('').filter((c,i) => c === winning[i]).length;
-          if (matches === 2) {
-            title = `✌️ 2 IN PLACE — +1 Token`;
-            detail = `The winning number was ${winning}. 2 digits in position!`;
-            winType = 'token'; break;
-          }
-        }
-      }
-      if (winType === 'none') {
-        title = 'No win this round';
-        detail = `The winning number was ${winning}. Better luck next week!`;
-      }
-      state.guesses = [];
-      await hydrateState();
-      updateUI();
-      updateGameView();
-      openBalloonReveal(winning, title, detail, winType);
-    } catch(e) {
-      showToast(e.message || 'Draw failed');
-    }
-  }
 
   function getPrizes() {
     return state.subscription === 'paid'
@@ -1922,82 +1707,12 @@
   async function resetApp() {
     if (!confirm('Sign out?')) return;
     clearToken();
-    state = { nickname:'', subscription:'free', tokens:1, totalWinnings:0, referrerBonus:0, myRefCode:'', guesses:[], drawId:null, currentInput:'', pendingReveal:null, leaderboard:[] };
+    state = { nickname:'', subscription:'free', tokens:1, totalWinnings:0, referrerBonus:0, myRefCode:'', guesses:[], drawId:null, currentInput:'', leaderboard:[] };
     initApp();
   }
 
   // ══════════════════════════════════════════
-  // ── TEST MODE ──
   // ══════════════════════════════════════════
-  const IS_TEST_MODE = new URLSearchParams(window.location.search).get('testmode') === 'true';
-  window.tmForcedOutcome = 'random';
-
-  function tmInit() {
-    if (!IS_TEST_MODE) return;
-    document.getElementById('testmode-bar').classList.add('visible');
-    const demoBtn = document.querySelector('.test-draw-btn');
-    if (demoBtn) demoBtn.style.display = 'none';
-    // Add admin secret input to test panel
-    const tmBody = document.getElementById('tm-body');
-    if (tmBody) {
-      const secretDiv = document.createElement('div');
-      secretDiv.innerHTML = `<div class="tm-section-label">🔑 Admin Secret</div><input id="tm-admin-secret" type="password" placeholder="ADMIN_SECRET value" style="background:#0d0d0d;border:1px solid #222;color:#0f0;padding:7px 10px;font-family:monospace;font-size:0.72rem;border-radius:3px;width:100%;">`;
-      tmBody.appendChild(secretDiv);
-    }
-    tmUpdateStatus();
-  }
-
-  function tmToggle() {
-    const body = document.getElementById('tm-body');
-    const arrow = document.getElementById('tm-arrow');
-    body.classList.toggle('open');
-    arrow.classList.toggle('open');
-  }
-
-  function tmFastForward() { showToast('Draw timing managed server-side'); }
-  function tmResetTimer() { showToast('Draw timing managed server-side'); }
-
-  function tmSetOutcome(outcome) {
-    window.tmForcedOutcome = outcome;
-    ['random','jackpot','partial','token','lose'].forEach(o => {
-      const btn = document.getElementById('tmo-' + o);
-      if (btn) btn.classList.toggle('selected', o === outcome);
-    });
-    const labels = { random:'RANDOM', jackpot:'🏆 JACKPOT', partial:'🎯 PARTIAL', token:'🎟️ TOKEN', lose:'❌ NO WIN' };
-    document.getElementById('tm-forced-label').textContent = labels[outcome] || outcome.toUpperCase();
-  }
-
-  function tmResetWeek() { showToast('Use admin panel to reset draws'); }
-  function tmAddTokens() { showToast('Use admin panel to add tokens'); }
-  function tmSetSub(tier) { showToast('Subscription changes via Stripe'); }
-  function tmClearPending() {
-    state.pendingReveal = null;
-    document.getElementById('balloon-overlay').classList.remove('active');
-    document.getElementById('result-banner').className = 'result-banner';
-    showToast('Pending reveal cleared');
-    tmUpdateStatus();
-  }
-
-  function tmUpdateStatus() {
-    if (!IS_TEST_MODE) return;
-    document.getElementById('tm-token-count').textContent = state.tokens;
-    document.getElementById('tm-entry-count').textContent = state.guesses.length;
-    document.getElementById('tm-real-time').textContent = new Date().toLocaleTimeString();
-    document.getElementById('tm-sim-time').textContent = new Date().toLocaleString();
-    document.getElementById('tm-time-state').innerHTML = '<span class="ok">server time</span>';
-    const freeBtn = document.getElementById('tm-sub-free');
-    const paidBtn = document.getElementById('tm-sub-paid');
-    if (freeBtn) freeBtn.classList.toggle('active', state.subscription !== 'paid');
-    if (paidBtn) paidBtn.classList.toggle('active', state.subscription === 'paid');
-    const pendingEl = document.getElementById('tm-pending-label');
-    if (state.pendingReveal) {
-      pendingEl.innerHTML = '<span class="warn">YES</span>';
-    } else {
-      pendingEl.innerHTML = '<span class="ok">none</span>';
-    }
-  }
-
-  setTimeout(tmInit, 100);
 
   // ══════════════════════════════════════════
   // ── BALLOON REVEAL (unchanged from original) ──
@@ -2100,7 +1815,6 @@
 
   function closeReveal() {
     document.getElementById('balloon-overlay').classList.remove('active');
-    state.pendingReveal = null;
     const { title, detail, winType } = balloonState;
     const banner = document.getElementById('result-banner');
     document.getElementById('result-title').textContent = title;
