@@ -1462,8 +1462,8 @@
         body: body ? JSON.stringify(body) : undefined
       });
       const data = await res.json();
-      if (res.status === 401) { clearToken(); initApp(); return null; }
-      if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
+      if (res.status === 401 && path !== '/auth/login' && path !== '/auth/register') { clearToken(); initApp(); return null; }
+      if (!res.ok) throw new Error(data.error || data.message || `Request failed (${res.status})`);
       return data;
     } catch(e) {
       throw e;
