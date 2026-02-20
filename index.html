@@ -1431,6 +1431,12 @@
   const API = 'https://numble-production.up.railway.app';
   const DEMO_INFINITE_TOKENS = true; // TODO: remove before launch
 
+  // Clear stale session if ?logout=1 or ?clear=1 in URL
+  if (/[?&](logout|clear)=1/.test(window.location.search)) {
+    localStorage.clear();
+    window.location.href = window.location.pathname;
+  }
+
   // ── STATE ──
   let state = {
     nickname: '',
