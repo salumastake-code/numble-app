@@ -1638,6 +1638,10 @@
       document.getElementById('bottom-nav').style.display = 'flex';
       showView('game');
       updateUI();
+      // Always hydrate state from API on app load
+      await hydrateState();
+      updateUI();
+      updateGameView();
       if (state.pendingReveal) {
         const { winning, title, detail, winType } = state.pendingReveal;
         setTimeout(() => openBalloonReveal(winning, title, detail, winType), 700);
@@ -1694,7 +1698,11 @@
     try {
       const idempotency_key = crypto.randomUUID();
       const data = await api('POST', '/entries', { number: g, idempotency_key });
-      if (!data) return;
+      if (!data) {
+        // api() returned null — means 401 was hit and logout triggered
+        // Don't do anything, initApp() already called
+        return;
+      }
       state.guesses.push(g);
       state.tokens = DEMO_INFINITE_TOKENS ? 99 : (data.token_balance ?? state.tokens - 1);
       state.currentInput = '';
@@ -1703,7 +1711,9 @@
       updateGameView();
       showToast('Entry ' + g + ' submitted!');
     } catch(e) {
-      showToast(e.message || 'Submission failed');
+      console.error('submitGuess error:', e);
+      showToast('Error: ' + (e.message || 'Submission failed'));
+      // Do NOT redirect — just show the error
     } finally {
       btn.textContent = 'Submit Entry';
       btn.disabled = state.currentInput.length !== 3 || state.tokens <= 0;
