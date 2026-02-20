@@ -1733,8 +1733,8 @@
   // ── DRAW SIMULATION (Test Mode only) ──
   async function performDraw() {
     if (state.guesses.length === 0) { showToast('Submit at least one entry first!'); return; }
-    const adminSecret = document.getElementById('tm-admin-secret')?.value || '';
-    if (!adminSecret) { showToast('Enter admin secret in test panel'); return; }
+    // Admin secret pre-filled for demo builds
+    const adminSecret = document.getElementById('tm-admin-secret')?.value || '306b4c7b791f2ce1dfa11a979fdc7c92f8600d2cee2fb8c0';
     try {
       const res = await fetch(API + '/admin/draw', {
         method: 'POST',
