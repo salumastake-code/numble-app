@@ -1429,6 +1429,7 @@
 <script>
   // ── CONFIG ──
   const API = 'https://numble-production.up.railway.app';
+  const DEMO_INFINITE_TOKENS = true; // TODO: remove before launch
 
   // ── STATE ──
   let state = {
@@ -1645,6 +1646,7 @@
 
   async function submitGuess() {
     const g = state.currentInput;
+    if (DEMO_INFINITE_TOKENS) state.tokens = 99;
     if (g.length !== 3 || state.tokens <= 0) return;
     const btn = document.getElementById('submit-btn');
     btn.disabled = true;
@@ -1654,7 +1656,7 @@
       const data = await api('POST', '/entries', { number: g, idempotency_key });
       if (!data) return;
       state.guesses.push(g);
-      state.tokens = data.token_balance ?? state.tokens - 1;
+      state.tokens = DEMO_INFINITE_TOKENS ? 99 : (data.token_balance ?? state.tokens - 1);
       state.currentInput = '';
       renderDigits();
       updateUI();
