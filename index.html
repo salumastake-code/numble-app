@@ -1537,7 +1537,7 @@
         plan: selectedPlan
       });
       if (!data) return;
-      setToken(data.token);
+      setToken(data.token || data.accessToken);
       await hydrateState();
       initApp();
     } catch(e) {
@@ -1554,7 +1554,7 @@
     try {
       const data = await api('POST', '/auth/login', { email, password });
       if (!data) return;
-      setToken(data.token);
+      setToken(data.token || data.accessToken);
       await hydrateState();
       initApp();
     } catch(e) {
@@ -1569,10 +1569,10 @@
       if (!data) return;
       state.nickname = data.user?.nickname || '';
       state.subscription = data.user?.subscription_status || 'free';
-      state.tokens = data.token_balance ?? 1;
-      state.myRefCode = data.user?.referral_code || '';
-      state.drawId = data.draw?.draw_id || null;
-      state.guesses = (data.entries || []).map(e => e.number);
+      state.tokens = data.token_balance ?? data.tokenBalance ?? 1;
+      state.myRefCode = data.user?.referral_code || data.user?.referralCode || '';
+      state.drawId = data.draw?.draw_id || data.draw?.drawId || null;
+      state.guesses = (data.entries || data.userEntries || []).map(e => e.number);
       state.totalWinnings = data.user?.total_winnings || 0;
       state.referrerBonus = data.user?.referral_bonus || 0;
       if (data.draw) startCountdownFromDraw(data.draw);
@@ -1825,8 +1825,9 @@
 
   // ── COUNTDOWN ──
   function startCountdownFromDraw(draw) {
-    if (!draw?.week_start) return;
-    const weekStart = new Date(draw.week_start);
+    const ws = draw?.week_start || draw?.weekStart;
+    if (!ws) return;
+    const weekStart = new Date(ws);
     const nextDraw = new Date(weekStart);
     nextDraw.setDate(nextDraw.getDate() + 7);
     document.getElementById('week-num').textContent = '#' + getWeekNumber(weekStart);
