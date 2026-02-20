@@ -1184,7 +1184,7 @@
           </tr>
         </tbody>
       </table>
-      <p style="font-size:0.78rem;color:var(--muted);margin-top:10px;">Subscribers receive 3 additional bonus tokens each month as a benefit of their subscription (4 tokens total). These bonus tokens are a subscription perk and are independent of the free monthly entry. Additional tokens can also be purchased at $9.99 for 3.</p>
+      <p style="font-size:0.78rem;color:var(--muted);margin-top:10px;">Subscribers receive 3 additional bonus tokens each month as a benefit of their subscription (4 tokens total). These bonus tokens are a subscription perk and are independent of the free monthly entry.</p>
     </div>
 
     <div class="legal-section">
@@ -1230,7 +1230,7 @@
 
     <div class="legal-section">
       <h3>Privacy Policy</h3>
-      <p>We do not sell or share your personal data. Nickname and referral info is stored locally on your device and used only for gameplay, prize eligibility, and payouts.</p>
+      <p>We collect your email, username, and entry data solely to operate the sweepstakes, determine winners, and process payouts. We do not sell or share your personal data with third parties. Entry history and prize records are stored securely and used only for gameplay, prize eligibility, and payout processing.</p>
     </div>
 
     <div class="legal-section">
@@ -1455,6 +1455,9 @@
       state.totalWinnings = data.user?.total_winnings || 0;
       state.referrerBonus = data.user?.referral_bonus || 0;
       if (data.draw) startCountdownFromDraw(data.draw);
+
+      // Check for unclaimed prize result from last draw
+      await checkLastDrawResult();
     } catch(e) {
       console.error('Hydrate failed:', e);
     }
@@ -1465,6 +1468,68 @@
         name: e.nickname, prize: e.total_winnings || e.prize || 0
       }));
     } catch(e) {}
+  }
+
+  // ── POST-DRAW RESULT CHECK ──
+  // Called on every app load — checks if user won in the most recent completed draw
+  // and hasn't seen the reveal yet (tracked in localStorage).
+  async function checkLastDrawResult() {
+    try {
+      const data = await api('GET', '/draws/history?limit=1');
+      if (!data || !data.draws || data.draws.length === 0) return;
+      const lastDraw = data.draws[0];
+      if (!lastDraw.winning_number) return;
+
+      const seenKey = 'numble_seen_draw_' + lastDraw.draw_id;
+      if (localStorage.getItem(seenKey)) return; // already shown
+
+      // Check if user had any entries in that draw
+      const hist = await api('GET', '/entries/history?limit=50');
+      if (!hist || !hist.entries) return;
+
+      const drawEntries = hist.entries.filter(e =>
+        (e.draws?.draw_id || e.draw_id) === lastDraw.draw_id
+      );
+      if (drawEntries.length === 0) return;
+
+      // Determine result
+      const winning = lastDraw.winning_number;
+      let title, detail, winType = 'none';
+
+      for (const entry of drawEntries) {
+        const num = entry.number;
+        const numSorted = num.split('').sort().join('');
+        const posMatches = num.split('').filter((c, i) => c === winning[i]).length;
+        const prizes = getPrizes(entry.subscription_at_entry);
+
+        if (num === winning) {
+          title = `🏆 EXACT MATCH — $${prizes.exact.toLocaleString()}!`;
+          detail = `The winning number was ${winning}. Your entry matched exactly!`;
+          winType = 'jackpot'; break;
+        } else if (numSorted === winSorted) {
+          title = `🎯 ALL DIGITS — $${prizes.anagram}`;
+          detail = `The winning number was ${winning}. Right digits, wrong order.`;
+          winType = 'partial'; break;
+        } else if (posMatches === 2) {
+          title = `✌️ 2 IN PLACE — +1 Token`;
+          detail = `The winning number was ${winning}. 2 digits in position!`;
+          winType = 'token'; break;
+        }
+      }
+
+      if (winType === 'none') {
+        title = 'No win this week';
+        detail = `The winning number was ${winning}. Better luck next week!`;
+      }
+
+      // Mark as seen before showing (so refresh doesn't re-trigger)
+      localStorage.setItem(seenKey, '1');
+
+      // Delay slightly so the app is fully rendered
+      setTimeout(() => openBalloonReveal(winning, title, detail, winType), 800);
+    } catch(e) {
+      console.error('checkLastDrawResult error:', e);
+    }
   }
 
   // ── INIT ──
@@ -1563,10 +1628,10 @@
     ).join('');
   }
 
-  // ── DRAW SIMULATION (Test Mode only) ──
-
-  function getPrizes() {
-    return state.subscription === 'paid'
+    // Returns prize amounts based on user's subscription at entry
+  function getPrizes(subscriptionAtEntry) {
+    const tier = subscriptionAtEntry || state.subscription;
+    return tier === 'paid'
       ? { exact: 1000, anagram: 100, tokens: 1 }
       : { exact: 50, anagram: 5, tokens: 1 };
   }
