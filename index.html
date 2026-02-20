@@ -1,0 +1,2061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NUMBLE</title>
+<style>
+  :root {
+    --bg: #000;
+    --bg-card: #111;
+    --bg-card2: #161616;
+    --border: #222;
+    --red: #ff2d2d;
+    --gold: #FFD700;
+    --text: #fff;
+    --muted: #888;
+    --display: Impact, 'Arial Black', sans-serif;
+    --body: Arial, Helvetica, sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+
+  /* ---- SUBSCRIPTION TIERS ---- */
+  :root {
+    --sub-free: #888;
+    --sub-paid: #FFD700;
+  }
+
+  .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-weight: 700;
+  }
+  .tier-badge.free {
+    border: 1px solid #333;
+    color: var(--sub-free);
+    background: #0d0d0d;
+  }
+  .tier-badge.paid {
+    border: 1px solid var(--sub-paid);
+    color: var(--sub-paid);
+    background: #1a1500;
+  }
+
+  /* Upgrade prompt card */
+  .upgrade-card {
+    background: linear-gradient(135deg, #0f0e00 0%, #1a1500 100%);
+    border: 1px solid #3a3000;
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 18px 20px;
+    margin-top: 20px;
+  }
+
+  .upgrade-card-title {
+    font-family: var(--display);
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .upgrade-card-body {
+    font-size: 0.82rem;
+    color: #aa9a44;
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  .prize-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .prize-compare-col {
+    background: #0a0900;
+    border: 1px solid #2a2200;
+    border-radius: 3px;
+    padding: 10px 12px;
+  }
+
+  .prize-compare-col.highlight {
+    border-color: #3a3000;
+    background: #120f00;
+  }
+
+  .prize-compare-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #555;
+    margin-bottom: 6px;
+    font-family: monospace;
+  }
+  .prize-compare-col.highlight .prize-compare-label { color: #888; }
+
+  .prize-compare-row {
+    font-size: 0.78rem;
+    color: #555;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .prize-compare-col.highlight .prize-compare-row { color: #aaa; }
+  .prize-compare-row .prize-val { color: var(--gold); font-weight: 700; }
+  .prize-compare-col:not(.highlight) .prize-val { color: #666; }
+
+  .btn-upgrade {
+    background: linear-gradient(135deg, #b8920a, #FFD700);
+    color: #000;
+    border: none;
+    padding: 12px 20px;
+    font-family: var(--display);
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 4px;
+    width: 100%;
+    transition: opacity 0.2s;
+  }
+  .btn-upgrade:hover { opacity: 0.88; }
+
+  /* What-you-missed banner — shown in balloon reveal for free users who won */
+  .missed-banner {
+    background: #0f0e00;
+    border: 1px solid #2a2200;
+    border-left: 3px solid var(--gold);
+    padding: 12px 16px;
+    margin-top: 14px;
+    border-radius: 3px;
+    display: none;
+  }
+  .missed-banner.show { display: block; }
+  .missed-banner-title {
+    font-family: var(--display);
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 4px;
+  }
+  .missed-banner-body {
+    font-size: 0.78rem;
+    color: #887733;
+    line-height: 1.5;
+  }
+
+  /* Sub pill in header */
+  .sub-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    border: 1px solid #333;
+    color: #666;
+    cursor: default;
+  }
+  .sub-pill.paid {
+    border-color: #3a3000;
+    color: var(--gold);
+    background: #0f0e00;
+  }
+
+  /* ---- HEADER ---- */
+  header {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 0;
+  }
+
+  .logo {
+    font-family: var(--display);
+    font-size: 2rem;
+    letter-spacing: 0.1em;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+  .logo span { color: var(--red); }
+
+  .token-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .token-badge:hover { border-color: var(--red); }
+  .token-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+
+  /* ---- MAIN ---- */
+  main {
+    width: 100%;
+    max-width: 480px;
+    padding: 24px;
+    flex: 1;
+  }
+
+  /* ---- VIEWS ---- */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ---- REGISTRATION ---- */
+  .reg-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 70vh;
+    gap: 24px;
+  }
+
+  .reg-headline {
+    font-family: var(--display);
+    font-size: 3rem;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .reg-headline span { color: var(--red); }
+
+  .reg-sub {
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .input-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  input[type="text"], input[type="number"], select, textarea {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-size: 1rem;
+    font-family: var(--body);
+    border-radius: 4px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--red); }
+
+  .btn {
+    background: var(--red);
+    color: #fff;
+    border: none;
+    padding: 14px 24px;
+    font-family: var(--display);
+    font-size: 1rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: opacity 0.2s, transform 0.1s;
+    width: 100%;
+  }
+  .btn:hover:not(:disabled) { opacity: 0.85; }
+  .btn:active:not(:disabled) { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 24px;
+    font-family: var(--body);
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: border-color 0.2s, color 0.2s;
+    width: 100%;
+  }
+  .btn-outline:hover { border-color: var(--text); color: var(--text); }
+
+  /* ---- GAME VIEW ---- */
+  .section-title {
+    font-family: var(--display);
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .draw-timer {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red);
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .timer-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .timer-value {
+    font-family: var(--display);
+    font-size: 1.4rem;
+    letter-spacing: 0.08em;
+    color: var(--red);
+  }
+
+  /* Number input display */
+  .number-display {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .digit-box {
+    width: 72px;
+    height: 88px;
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-size: 3rem;
+    transition: border-color 0.2s;
+  }
+  .digit-box.filled { border-color: var(--red); }
+
+  .number-pad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .pad-btn {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 16px;
+    font-family: var(--display);
+    font-size: 1.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s, border-color 0.15s;
+    text-align: center;
+  }
+  .pad-btn:hover { background: var(--bg-card2); border-color: #444; }
+  .pad-btn:active { background: #222; }
+  .pad-btn.delete { font-size: 1rem; color: var(--muted); }
+
+  /* Entries list */
+  .entries-section {
+    margin-top: 28px;
+  }
+
+  .entry-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-family: var(--display);
+    font-size: 1.1rem;
+    letter-spacing: 0.08em;
+  }
+
+  .entry-num { color: var(--text); }
+  .entry-badge {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--red);
+    color: var(--red);
+    text-transform: uppercase;
+  }
+
+  /* Result banner */
+  .result-banner {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--gold);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: none;
+    animation: slideIn 0.3s ease;
+  }
+  .result-banner.show { display: block; }
+  .result-banner.win { border-left-color: var(--gold); }
+  .result-banner.lose { border-left-color: var(--muted); }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-title {
+    font-family: var(--display);
+    font-size: 1.2rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .result-detail {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ---- NAV ---- */
+  nav {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    border-top: 1px solid var(--border);
+    position: sticky;
+    bottom: 0;
+    background: rgba(0,0,0,0.95);
+    backdrop-filter: blur(10px);
+  }
+
+  .nav-btn {
+    flex: 1;
+    padding: 14px 8px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: var(--body);
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s;
+  }
+  .nav-btn.active { color: var(--red); }
+  .nav-btn svg { width: 20px; height: 20px; }
+
+  /* ---- LEADERBOARD ---- */
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+
+  .lb-rank {
+    font-family: var(--display);
+    font-size: 1.2rem;
+    color: var(--muted);
+    width: 28px;
+    text-align: center;
+  }
+  .lb-rank.gold { color: var(--gold); }
+  .lb-rank.silver { color: #C0C0C0; }
+  .lb-rank.bronze { color: #CD7F32; }
+
+  .lb-name { flex: 1; font-weight: 600; }
+  .lb-prize {
+    font-family: var(--display);
+    font-size: 1.1rem;
+    color: var(--red);
+  }
+
+  /* ---- PROFILE ---- */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--red);
+    padding: 16px;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .stat-value {
+    font-family: var(--display);
+    font-size: 1.8rem;
+    line-height: 1;
+  }
+
+  /* ---- PAYOUT ---- */
+  .payout-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .tab-btn {
+    flex: 1;
+    padding: 10px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .tab-btn.active {
+    border-color: var(--red);
+    color: var(--text);
+    background: var(--bg-card2);
+  }
+
+  /* ---- LEGAL ---- */
+  .legal-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+
+  .legal-section h3 {
+    font-family: var(--display);
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    color: var(--red);
+  }
+
+  .legal-section p, .legal-section li {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .legal-section ul { margin-left: 1rem; }
+
+  /* ---- PRIZE TABLE ---- */
+  .prize-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    font-size: 0.85rem;
+  }
+
+  .prize-table th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prize-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .prize-table td:last-child { color: var(--gold); font-weight: 700; }
+  .prize-table th:nth-child(3) { text-align: right; }
+  .prize-table td:nth-child(3) { text-align: right; }
+  .prize-table th:nth-child(2) { text-align: right; }
+  .prize-table td:nth-child(2) { text-align: right; }
+
+  /* Helpers */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .page-title {
+    font-family: var(--display);
+    font-size: 1.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .accent-bar {
+    width: 40px;
+    height: 3px;
+    background: var(--red);
+    margin-bottom: 20px;
+  }
+
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    padding: 32px 0;
+    font-size: 0.9rem;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-card);
+    border: 1px solid var(--red);
+    color: var(--text);
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .referral-code-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 14px 18px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .copy-btn:hover { border-color: var(--text); color: var(--text); }
+
+  /* Demo draw button */
+  .test-draw-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    padding: 10px 16px;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 4px;
+    width: 100%;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-top: 12px;
+  }
+  .test-draw-btn:hover { border-color: var(--muted); color: var(--text); }
+
+  @media (max-width: 400px) {
+    .digit-box { width: 60px; height: 72px; font-size: 2.4rem; }
+  }
+
+
+  /* ======== TEST MODE PANEL ======== */
+  #testmode-bar {
+    display: none;
+    width: 100%;
+    max-width: 480px;
+    background: #080808;
+    border: 1px solid #1c1c1c;
+    border-top: 2px solid #0f0;
+    margin-bottom: 8px;
+  }
+  #testmode-bar.visible { display: block; }
+  .tm-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    padding: 9px 14px; cursor: pointer; user-select: none;
+  }
+  .tm-badge {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 0.68rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: #0f0; font-family: monospace;
+  }
+  .tm-badge-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: #0f0; box-shadow: 0 0 6px #0f0;
+    animation: tmBlink 1.4s infinite;
+  }
+  @keyframes tmBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .tm-arrow { font-size:0.65rem; color:#444; transition:transform 0.2s; font-family:monospace; }
+  .tm-arrow.open { transform: rotate(180deg); }
+  .tm-body {
+    display: none; padding: 0 14px 14px;
+    flex-direction: column; gap: 12px;
+    border-top: 1px solid #181818;
+  }
+  .tm-body.open { display: flex; }
+  .tm-section-label {
+    font-size: 0.62rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: #444;
+    font-family: monospace; margin-bottom: 4px; padding-top: 8px;
+  }
+  .tm-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tm-btn {
+    background: #0d0d0d; border: 1px solid #222; color: #777;
+    padding: 7px 12px; font-size: 0.72rem; font-family: monospace;
+    border-radius: 3px; cursor: pointer; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .tm-btn:hover { border-color: #0f0; color: #0f0; }
+  .tm-btn.active { border-color: #0f0; color: #0f0; background: #091209; }
+  .tm-btn.danger:hover { border-color: #ff2d2d; color: #ff2d2d; }
+  .tm-outcome-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tm-outcome-btn {
+    background: #0d0d0d; border: 1px solid #222; color: #555;
+    padding: 10px 8px; font-size: 0.7rem; font-family: monospace;
+    border-radius: 3px; cursor: pointer; transition: all 0.15s;
+    text-align: center; line-height: 1.5;
+  }
+  .tm-outcome-btn:hover { border-color: #444; color: #aaa; }
+  .tm-outcome-btn.selected { border-color: #0f0; color: #0f0; background: #091209; }
+  .tm-status {
+    font-family: monospace; font-size: 0.7rem; color: #444;
+    padding: 7px 10px; background: #050505;
+    border: 1px solid #181818; border-radius: 3px; line-height: 1.7;
+  }
+  .tm-status .ok { color: #0f0; }
+  .tm-status .warn { color: #ffaa00; }
+  .tm-status .info { color: #0af; }
+
+  /* ======== BALLOON REVEAL OVERLAY ======== */
+  #balloon-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 200;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  #balloon-overlay.active { display: flex; }
+
+  .balloon-bg-particles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .reveal-heading {
+    font-family: var(--display);
+    font-size: 0.8rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+    z-index: 1;
+  }
+
+  .reveal-subheading {
+    font-family: var(--display);
+    font-size: 1.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 48px;
+    z-index: 1;
+    text-align: center;
+  }
+  .reveal-subheading span { color: var(--red); }
+
+  .balloons-row {
+    display: flex;
+    gap: 28px;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    margin-bottom: 48px;
+    min-height: 200px;
+  }
+
+  /* Each balloon wrapper */
+  .balloon-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    min-width: 100px;
+  }
+
+  /* The balloon SVG container */
+  .balloon-svg-wrap {
+    width: 100px;
+    height: 130px;
+    min-height: 130px;
+    flex-shrink: 0;
+    position: relative;
+    transition: transform 0.15s ease;
+  }
+  .balloon-wrap:not(.popped):hover .balloon-svg-wrap {
+    transform: scale(1.06) rotate(-3deg);
+  }
+  .balloon-wrap:not(.popped):active .balloon-svg-wrap {
+    transform: scale(0.94);
+  }
+
+  .balloon-wrap.popped .balloon-svg-wrap {
+    animation: popAnim 0.35s forwards;
+  }
+
+  @keyframes popAnim {
+    0%   { transform: scale(1); opacity: 1; }
+    30%  { transform: scale(1.4); opacity: 0.8; }
+    60%  { transform: scale(0.2); opacity: 0.3; }
+    100% { transform: scale(0); opacity: 0; }
+  }
+
+  /* The digit revealed after balloon pops */
+  .balloon-digit {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%) scale(0.5);
+    width: 100px;
+    height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-size: 4rem;
+    opacity: 0;
+    transition: opacity 0.45s 0.25s, transform 0.45s 0.25s;
+    pointer-events: none;
+    z-index: 10;
+    text-shadow: 0 0 20px currentColor;
+  }
+  .balloon-wrap.popped .balloon-digit {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  .balloon-string {
+    width: 2px;
+    height: 44px;
+    background: linear-gradient(to bottom, #666, transparent);
+    margin-top: 0;
+    transition: opacity 0.3s;
+  }
+  .balloon-wrap.popped .balloon-string { opacity: 0; }
+
+  /* Tap hint */
+  .tap-hint {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    z-index: 1;
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* Result card shown after all balloons popped */
+  .reveal-result-card {
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    background: var(--bg-card);
+    border-top: 3px solid var(--red);
+    padding: 28px 28px 40px;
+    transform: translateY(100%);
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 2;
+  }
+  .reveal-result-card.show { transform: translateY(0); }
+
+  .reveal-result-card.win-big { border-top-color: var(--gold); }
+
+  .result-card-title {
+    font-family: var(--display);
+    font-size: 1.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    line-height: 1.1;
+  }
+
+  .result-card-detail {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  /* Confetti particles */
+  .confetti-piece {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    pointer-events: none;
+    animation: confettiFall linear forwards;
+  }
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg) scale(1); opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(700px) rotate(720deg) scale(0.5); opacity: 0; }
+  }
+
+  /* Pop burst particles */
+  .burst-particle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: burst ease-out forwards;
+  }
+  @keyframes burst {
+    0%   { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">NUM<span>BLE</span></div>
+  <div style="display:flex;align-items:center;gap:8px;">
+    <div class="sub-pill" id="header-sub-pill">FREE</div>
+    <div class="token-badge" onclick="showView('profile')">
+      <div class="token-dot"></div>
+      <span id="header-tokens">1</span> tokens
+    </div>
+  </div>
+</header>
+
+
+<!-- ======== TEST MODE PANEL ======== -->
+<div id="testmode-bar">
+  <div class="tm-header" onclick="tmToggle()">
+    <div class="tm-badge">
+      <div class="tm-badge-dot"></div>
+      TEST MODE
+    </div>
+    <span class="tm-arrow" id="tm-arrow">▼</span>
+  </div>
+  <div class="tm-body" id="tm-body">
+
+    <div>
+      <div class="tm-section-label">⏩ Time Control</div>
+      <div class="tm-row">
+        <button class="tm-btn" onclick="tmFastForward()">Jump to Draw Now</button>
+        <button class="tm-btn" onclick="tmResetTimer()">Reset Timer</button>
+      </div>
+      <div class="tm-status" id="tm-clock-status" style="margin-top:8px;">
+        Real time: <span class="info" id="tm-real-time">—</span><br>
+        Simulated: <span class="ok" id="tm-sim-time">—</span><br>
+        State: <span id="tm-time-state">normal</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="tm-section-label">🏆 Force Outcome</div>
+      <div class="tm-outcome-grid">
+        <button class="tm-outcome-btn" id="tmo-random" onclick="tmSetOutcome('random')">
+          🎲 Random<br><span style="color:#555;font-size:0.65rem;">as normal</span>
+        </button>
+        <button class="tm-outcome-btn" id="tmo-jackpot" onclick="tmSetOutcome('jackpot')">
+          🏆 Jackpot<br><span style="color:#555;font-size:0.65rem;">$1,000 exact</span>
+        </button>
+        <button class="tm-outcome-btn" id="tmo-partial" onclick="tmSetOutcome('partial')">
+          🎯 Partial<br><span style="color:#555;font-size:0.65rem;">$100 anagram</span>
+        </button>
+        <button class="tm-outcome-btn" id="tmo-token" onclick="tmSetOutcome('token')">
+          🎟️ Token<br><span style="color:#555;font-size:0.65rem;">+1 free token</span>
+        </button>
+        <button class="tm-outcome-btn" id="tmo-lose" onclick="tmSetOutcome('lose')" style="grid-column:span 2;">
+          ❌ No Win<br><span style="color:#555;font-size:0.65rem;">no match</span>
+        </button>
+      </div>
+      <div class="tm-status" id="tm-outcome-status" style="margin-top:8px;">
+        Forced outcome: <span class="ok" id="tm-forced-label">RANDOM</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="tm-section-label">👤 Subscription</div>
+      <div class="tm-row">
+        <button class="tm-btn" id="tm-sub-free" onclick="tmSetSub('free')">Free (1 token)</button>
+        <button class="tm-btn" id="tm-sub-paid" onclick="tmSetSub('paid')">⭐ Paid (3 tokens)</button>
+      </div>
+    </div>
+    <div>
+      <div class="tm-section-label">🔧 State Controls</div>
+      <div class="tm-row">
+        <button class="tm-btn danger" onclick="tmResetWeek()">Reset Week</button>
+        <button class="tm-btn danger" onclick="tmAddTokens()">+3 Tokens</button>
+        <button class="tm-btn danger" onclick="tmClearPending()">Clear Pending Reveal</button>
+      </div>
+      <div class="tm-status" style="margin-top:8px;">
+        Tokens: <span class="ok" id="tm-token-count">—</span> &nbsp;|&nbsp;
+        Entries: <span class="ok" id="tm-entry-count">—</span> &nbsp;|&nbsp;
+        Pending reveal: <span id="tm-pending-label">—</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<main>
+  <!-- REGISTRATION -->
+  <div class="view active" id="view-registration">
+    <div class="reg-container">
+      <div>
+        <div class="reg-headline">Pick your<br><span>number.</span><br>Win cash.</div>
+        <div style="width:40px;height:3px;background:var(--red);margin:16px 0;"></div>
+        <p class="reg-sub">Weekly sweepstakes. 3-digit numbers. Real prizes.<br>Free to play. No purchase necessary.</p>
+      </div>
+      <div class="input-group">
+        <div class="input-wrap">
+          <label>Email</label>
+          <input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email">
+        </div>
+        <div class="input-wrap">
+          <label>Your Nickname</label>
+          <input type="text" id="reg-name" placeholder="e.g. LuckyAce77" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <div class="input-wrap">
+          <label>Password</label>
+          <input type="password" id="reg-password" placeholder="Choose a password (min 6 chars)" autocomplete="new-password">
+        </div>
+        <div class="input-wrap">
+          <label>Referral Code (optional)</label>
+          <input type="text" id="reg-referral" placeholder="Enter code if you have one" autocomplete="off" autocapitalize="off">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="tm-section-label" style="color:var(--muted);padding-top:0;">Choose your plan</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="plan-selector">
+            <button class="tm-outcome-btn" id="plan-free" onclick="selectPlan('free')" style="border-color:#333;color:#888;padding:14px 8px;font-family:var(--body);font-size:0.82rem;">
+              <div style="font-size:1rem;margin-bottom:4px;">🆓</div>
+              <div style="font-weight:700;color:#aaa;">Free</div>
+              <div style="font-size:0.7rem;color:#555;margin-top:4px;">1 free token/month<br>Up to $50</div>
+            </button>
+            <button class="tm-outcome-btn" id="plan-paid" onclick="selectPlan('paid')" style="padding:14px 8px;font-family:var(--body);font-size:0.82rem;">
+              <div style="font-size:1rem;margin-bottom:4px;">⭐</div>
+              <div style="font-weight:700;color:var(--gold);">Subscriber</div>
+              <div style="font-size:0.7rem;color:#887733;margin-top:4px;">1 free + 3 bonus tokens<br>Up to $1,000</div>
+            </button>
+          </div>
+        </div>
+        <button class="btn" onclick="register()" id="reg-btn" disabled>Create Profile</button>
+        <p style="text-align:center;font-size:0.8rem;color:var(--muted);margin-top:4px;">Already have an account? <a href="#" onclick="showLoginForm()" style="color:var(--red);text-decoration:none;">Sign in</a></p>
+        <!-- Login form (hidden by default) -->
+        <div id="login-form" style="display:none;flex-direction:column;gap:12px;">
+          <div class="input-wrap"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"></div>
+          <div class="input-wrap"><label>Password</label><input type="password" id="login-password" placeholder="Your password" autocomplete="current-password"></div>
+          <button class="btn" onclick="login()">Sign In</button>
+          <p style="text-align:center;font-size:0.8rem;color:var(--muted);">New here? <a href="#" onclick="showRegisterForm()" style="color:var(--red);text-decoration:none;">Create account</a></p>
+        </div>
+      </div>
+      <p style="font-size:0.72rem;color:var(--muted);line-height:1.6;text-align:center;">
+        By continuing you agree to our Terms of Use and confirm you are 18 or older.
+      </p>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="view" id="view-game">
+    <div class="draw-timer">
+      <div>
+        <div class="timer-label">Next Draw</div>
+        <div class="timer-value" id="draw-countdown">--:--:--</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="timer-label">Week</div>
+        <div style="font-family:var(--display);font-size:1.2rem;letter-spacing:0.08em;" id="week-num">—</div>
+      </div>
+    </div>
+
+    <div id="result-banner" class="result-banner">
+      <div class="result-title" id="result-title">—</div>
+      <div class="result-detail" id="result-detail">—</div>
+    </div>
+
+    <div class="section-title">Enter Your 3-Digit Number</div>
+
+    <div class="number-display" id="digit-display">
+      <div class="digit-box" id="d0">—</div>
+      <div class="digit-box" id="d1">—</div>
+      <div class="digit-box" id="d2">—</div>
+    </div>
+
+    <div class="number-pad">
+      <button class="pad-btn" onclick="padInput('1')">1</button>
+      <button class="pad-btn" onclick="padInput('2')">2</button>
+      <button class="pad-btn" onclick="padInput('3')">3</button>
+      <button class="pad-btn" onclick="padInput('4')">4</button>
+      <button class="pad-btn" onclick="padInput('5')">5</button>
+      <button class="pad-btn" onclick="padInput('6')">6</button>
+      <button class="pad-btn" onclick="padInput('7')">7</button>
+      <button class="pad-btn" onclick="padInput('8')">8</button>
+      <button class="pad-btn" onclick="padInput('9')">9</button>
+      <button class="pad-btn delete" onclick="padClear()">CLR</button>
+      <button class="pad-btn" onclick="padInput('0')">0</button>
+      <button class="pad-btn delete" onclick="padDelete()">⌫</button>
+    </div>
+
+    <button class="btn" id="submit-btn" onclick="submitGuess()" disabled>Submit Entry</button>
+
+    <button class="test-draw-btn" onclick="performDraw()">
+      ⚡ Simulate Weekly Draw (Demo)
+    </button>
+
+    <div class="entries-section" id="entries-section" style="display:none;">
+      <div class="section-title">Your Entries This Week</div>
+      <div id="entries-list"></div>
+    </div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="view" id="view-leaderboard">
+    <div class="page-title">Leaderboard</div>
+    <div class="accent-bar"></div>
+    <div id="leaderboard-list"></div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="view" id="view-profile">
+    <div class="page-title">Profile</div>
+    <div class="accent-bar"></div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Nickname</div>
+        <div class="stat-value" id="profile-name" style="font-size:1.2rem;">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tokens</div>
+        <div class="stat-value" id="profile-tokens">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Winnings</div>
+        <div class="stat-value" id="profile-winnings" style="color:var(--gold);">$0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Referral Bonus</div>
+        <div class="stat-value" id="profile-bonus" style="color:var(--red);">$0</div>
+      </div>
+    </div>
+
+    <div class="section-title">Your Referral Code</div>
+    <div class="referral-code-box">
+      <span style="font-family:var(--display);letter-spacing:0.15em;" id="profile-refcode">—</span>
+      <button class="copy-btn" onclick="copyRefCode()">Copy</button>
+    </div>
+    <p style="font-size:0.75rem;color:var(--muted);margin-bottom:24px;">Share your code. Earn 10% when someone you referred wins.</p>
+
+    <button class="btn" onclick="showView('payout')" style="margin-bottom:12px;">Request Payout</button>
+
+    <!-- Upgrade card — shown for free users only -->
+    <div class="upgrade-card" id="profile-upgrade-card">
+      <div class="upgrade-card-title">⭐ Upgrade to Subscriber</div>
+      <div class="upgrade-card-body">You're on the free plan — 1 free token per month, prizes up to $50. Subscribers receive 3 bonus tokens on top of their free token (4 total), plus 20× the prizes.</div>
+      <div class="prize-compare">
+        <div class="prize-compare-col">
+          <div class="prize-compare-label">Free</div>
+          <div class="prize-compare-row">Exact match <span class="prize-val">$50</span></div>
+          <div class="prize-compare-row">Anagram <span class="prize-val">$5</span></div>
+          <div class="prize-compare-row">2 in place <span class="prize-val">+1 token</span></div>
+          <div class="prize-compare-row">Monthly tokens <span class="prize-val">1 free</span></div>
+        </div>
+        <div class="prize-compare-col highlight">
+          <div class="prize-compare-label">⭐ Subscriber</div>
+          <div class="prize-compare-row">Exact match <span class="prize-val">$1,000</span></div>
+          <div class="prize-compare-row">Anagram <span class="prize-val">$100</span></div>
+          <div class="prize-compare-row">2 in place <span class="prize-val">+1 token</span></div>
+          <div class="prize-compare-row">Monthly tokens <span class="prize-val">1 free + 3 bonus</span></div>
+        </div>
+      </div>
+      <button class="btn-upgrade" onclick="upgradeAccount()">Upgrade — $12.99/month</button>
+    </div>
+
+    <!-- Manage sub card — shown for paid users only -->
+    <div style="display:none;" id="profile-manage-sub">
+      <div style="background:#0f0e00;border:1px solid #2a2200;border-radius:4px;padding:16px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:#887733;margin-bottom:4px;">Subscription</div>
+          <div style="font-family:var(--display);font-size:1rem;color:var(--gold);">⭐ ACTIVE — $12.99/mo</div>
+        </div>
+        <button class="btn-outline" onclick="downgradeAccount()" style="width:auto;padding:8px 14px;font-size:0.75rem;border-color:#3a3000;color:#887733;">Cancel</button>
+      </div>
+    </div>
+
+    <button class="btn-outline" onclick="resetApp()" style="margin-top:4px;">Sign Out</button>
+  </div>
+
+  <!-- PAYOUT -->
+  <div class="view" id="view-payout">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+      <button class="btn-outline" onclick="showView('profile')" style="width:auto;padding:8px 16px;">← Back</button>
+      <div class="page-title" style="margin-bottom:0;">Payout</div>
+    </div>
+    <div class="accent-bar"></div>
+
+    <div class="payout-tabs" id="payout-tabs">
+      <button class="tab-btn active" onclick="selectPayout('PayPal')">PayPal</button>
+      <button class="tab-btn" onclick="selectPayout('Venmo')">Venmo</button>
+      <button class="tab-btn" onclick="selectPayout('Cash App')">Cash App</button>
+    </div>
+
+    <div class="input-wrap" style="margin-bottom:16px;">
+      <label id="payout-label">PayPal Email or Username</label>
+      <input type="text" id="payout-detail" placeholder="Enter your PayPal info" autocomplete="off">
+    </div>
+
+    <div style="background:var(--bg-card);border:1px solid var(--border);padding:16px;border-radius:4px;margin-bottom:20px;">
+      <div class="stat-label">Available Balance</div>
+      <div style="font-family:var(--display);font-size:2rem;color:var(--gold);" id="payout-balance">$0</div>
+    </div>
+
+    <button class="btn" id="payout-btn" onclick="submitPayout()">Submit Payout Request</button>
+    <div id="payout-confirm" style="display:none;color:#4CAF50;text-align:center;margin-top:16px;font-size:0.9rem;"></div>
+  </div>
+
+  <!-- LEGAL -->
+  <div class="view" id="view-legal">
+    <div class="page-title">Rules & Legal</div>
+    <div class="accent-bar"></div>
+
+    <div class="legal-section">
+      <h3>No Purchase Necessary</h3>
+      <p style="color:var(--muted);font-size:0.85rem;line-height:1.7;margin-bottom:12px;">No purchase is necessary to enter or win. A purchase does not improve your chances of winning. Void where prohibited.</p>
+      <ul>
+        <li>Every registered user receives <strong>1 free entry token per month</strong> at no cost.</li>
+        <li>Each token lets you enter one 3-digit number (000–999) per week.</li>
+        <li>You may submit the same number more than once in the same week &mdash; each submission uses one token and counts as a separate entry.</li>
+        <li>Each number has a limited number of available slots per weekly drawing. Slots are based on total entries for that draw and may increase as more people enter. A number that appears full may reopen later in the week.</li>
+        <li>The weekly drawing occurs every Monday at 12:00 AM.</li>
+        <li>Prize tier is determined by your subscription status at the time of entry.</li>
+        <li>Referrers earn a 10% cash bonus when someone they referred wins a cash prize.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h3>Tokens Per Month</h3>
+      <table class="prize-table">
+        <thead>
+          <tr>
+            <th>Plan</th>
+            <th>Tokens</th>
+            <th>Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>🆓 Free</td>
+            <td style="color:var(--text);">1 free token</td>
+            <td style="color:var(--muted);font-weight:400;">No cost</td>
+          </tr>
+          <tr>
+            <td>⭐ Subscriber</td>
+            <td style="color:var(--gold);font-weight:700;">1 free + 3 bonus tokens</td>
+            <td style="color:var(--gold);font-weight:700;">$12.99/mo</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.78rem;color:var(--muted);margin-top:10px;">Subscribers receive 3 additional bonus tokens each month as a benefit of their subscription (4 tokens total). These bonus tokens are a subscription perk and are independent of the free monthly entry. Additional tokens can also be purchased at $9.99 for 3.</p>
+    </div>
+
+    <div class="legal-section">
+      <h3>Prize Tiers</h3>
+      <table class="prize-table">
+        <thead>
+          <tr>
+            <th>Result</th>
+            <th style="color:var(--muted);">🆓 Free</th>
+            <th style="color:var(--gold);">⭐ Subscriber</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Exact match (all 3 in order)</td>
+            <td style="color:var(--muted);font-weight:400;">$50</td>
+            <td style="color:var(--gold);font-weight:700;">$1,000</td>
+          </tr>
+          <tr>
+            <td>All 3 correct, wrong order</td>
+            <td style="color:var(--muted);font-weight:400;">$5</td>
+            <td style="color:var(--gold);font-weight:700;">$100</td>
+          </tr>
+          <tr>
+            <td>Exactly 2 digits in position</td>
+            <td style="color:var(--muted);font-weight:400;">+1 token</td>
+            <td style="color:var(--gold);font-weight:700;">+1 token</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.78rem;color:var(--muted);">Subscription status at time of entry determines your prize tier. Upgrading after entry does not change that week's prize.</p>
+    </div>
+
+    <div class="legal-section">
+      <h3>Referral Program</h3>
+      <ul>
+        <li>Share your unique referral code with friends.</li>
+        <li>When someone you referred wins a cash prize, you earn a 10% bonus.</li>
+        <li>Example: your referral wins $1,000 — you earn $100.</li>
+        <li>Referral bonuses are paid out via the same payout methods as prizes.</li>
+      </ul>
+    </div>
+
+    <div class="legal-section">
+      <h3>Privacy Policy</h3>
+      <p>We do not sell or share your personal data. Nickname and referral info is stored locally on your device and used only for gameplay, prize eligibility, and payouts.</p>
+    </div>
+
+    <div class="legal-section">
+      <h3>Terms of Use</h3>
+      <p>By using Numble, you agree to play fairly, follow all sweepstakes rules, and confirm you are 18 years of age or older. Use of this app for unauthorized or automated entry is prohibited.</p>
+    </div>
+  </div>
+</main>
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav" style="display:none;">
+  <button class="nav-btn active" id="nav-game" onclick="showView('game')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="currentColor" stroke="none" font-weight="bold">N</text></svg>
+    Play
+  </button>
+  <button class="nav-btn" id="nav-leaderboard" onclick="showView('leaderboard')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Board
+  </button>
+  <button class="nav-btn" id="nav-profile" onclick="showView('profile')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </button>
+  <button class="nav-btn" id="nav-legal" onclick="showView('legal')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    Rules
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- ======== BALLOON REVEAL OVERLAY ======== -->
+<div id="balloon-overlay">
+  <div class="balloon-bg-particles" id="confetti-container"></div>
+  <div class="reveal-heading">Weekly Draw Result</div>
+<script>
+  // ── CONFIG ──
+  const API = 'https://numble-production.up.railway.app';
+
+  // ── STATE ──
+  let state = {
+    nickname: '',
+    subscription: 'free',
+    tokens: 1,
+    totalWinnings: 0,
+    referrerBonus: 0,
+    myRefCode: '',
+    guesses: [],
+    drawId: null,
+    currentInput: '',
+    pendingReveal: null,
+    leaderboard: []
+  };
+
+  // ── API HELPERS ──
+  function getToken() { return localStorage.getItem('numble_token'); }
+  function setToken(t) { localStorage.setItem('numble_token', t); }
+  function clearToken() { localStorage.removeItem('numble_token'); }
+
+  async function api(method, path, body) {
+    const headers = { 'Content-Type': 'application/json' };
+    const token = getToken();
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    try {
+      const res = await fetch(API + path, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const data = await res.json();
+      if (res.status === 401) { clearToken(); initApp(); return null; }
+      if (!res.ok) throw new Error(data.error || data.message || 'Request failed');
+      return data;
+    } catch(e) {
+      throw e;
+    }
+  }
+
+  // ── AUTH FORMS ──
+  function showLoginForm() {
+    document.getElementById('login-form').style.display = 'flex';
+    document.getElementById('reg-btn').style.display = 'none';
+    document.querySelector('#login-form + p, p:has(+ #login-form)') && null;
+    // hide register fields
+    ['reg-email','reg-name','reg-password','reg-referral'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.closest('.input-wrap').style.display = 'none';
+    });
+    document.getElementById('plan-selector') && (document.getElementById('plan-selector').closest('div').style.display = 'none');
+  }
+
+  function showRegisterForm() {
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('reg-btn').style.display = 'block';
+    ['reg-email','reg-name','reg-password','reg-referral'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.closest('.input-wrap').style.display = 'flex';
+    });
+    document.getElementById('plan-selector') && (document.getElementById('plan-selector').closest('div').style.display = 'block');
+  }
+
+  // ── REGISTRATION / LOGIN ──
+  document.addEventListener('DOMContentLoaded', () => {
+    const nameInput = document.getElementById('reg-name');
+    const emailInput = document.getElementById('reg-email');
+    const passInput = document.getElementById('reg-password');
+    if (nameInput) nameInput.addEventListener('input', validateRegForm);
+    if (emailInput) emailInput.addEventListener('input', validateRegForm);
+    if (passInput) passInput.addEventListener('input', validateRegForm);
+    setTimeout(() => selectPlan('free'), 50);
+    initApp();
+  });
+
+  function validateRegForm() {
+    const email = (document.getElementById('reg-email')?.value || '').trim();
+    const name = (document.getElementById('reg-name')?.value || '').trim();
+    const pass = (document.getElementById('reg-password')?.value || '').trim();
+    const btn = document.getElementById('reg-btn');
+    if (btn) btn.disabled = !(email && name && pass.length >= 6);
+  }
+
+  let selectedPlan = 'free';
+  function selectPlan(plan) {
+    selectedPlan = plan;
+    const freeBtn = document.getElementById('plan-free');
+    const paidBtn = document.getElementById('plan-paid');
+    if (freeBtn) freeBtn.classList.toggle('selected', plan === 'free');
+    if (paidBtn) paidBtn.classList.toggle('selected', plan === 'paid');
+  }
+
+  async function register() {
+    const email = document.getElementById('reg-email')?.value.trim();
+    const name = document.getElementById('reg-name')?.value.trim();
+    const password = document.getElementById('reg-password')?.value;
+    const ref = document.getElementById('reg-referral')?.value.trim();
+    if (!email || !name || !password) return;
+    const btn = document.getElementById('reg-btn');
+    btn.disabled = true;
+    btn.textContent = 'Creating...';
+    try {
+      const data = await api('POST', '/auth/register', {
+        email, password, nickname: name,
+        referral_code: ref || undefined,
+        plan: selectedPlan
+      });
+      if (!data) return;
+      setToken(data.token);
+      await hydrateState();
+      initApp();
+    } catch(e) {
+      showToast(e.message || 'Registration failed');
+      btn.disabled = false;
+      btn.textContent = 'Create Profile';
+    }
+  }
+
+  async function login() {
+    const email = document.getElementById('login-email')?.value.trim();
+    const password = document.getElementById('login-password')?.value;
+    if (!email || !password) return;
+    try {
+      const data = await api('POST', '/auth/login', { email, password });
+      if (!data) return;
+      setToken(data.token);
+      await hydrateState();
+      initApp();
+    } catch(e) {
+      showToast(e.message || 'Login failed');
+    }
+  }
+
+  // ── HYDRATE STATE FROM API ──
+  async function hydrateState() {
+    try {
+      const data = await api('GET', '/draws/current');
+      if (!data) return;
+      state.nickname = data.user?.nickname || '';
+      state.subscription = data.user?.subscription_status || 'free';
+      state.tokens = data.token_balance ?? 1;
+      state.myRefCode = data.user?.referral_code || '';
+      state.drawId = data.draw?.draw_id || null;
+      state.guesses = (data.entries || []).map(e => e.number);
+      state.totalWinnings = data.user?.total_winnings || 0;
+      state.referrerBonus = data.user?.referral_bonus || 0;
+      if (data.draw) startCountdownFromDraw(data.draw);
+    } catch(e) {
+      console.error('Hydrate failed:', e);
+    }
+    // Load leaderboard
+    try {
+      const lb = await api('GET', '/leaderboard');
+      if (lb) state.leaderboard = (lb.leaderboard || lb).map(e => ({
+        name: e.nickname, prize: e.total_winnings || e.prize || 0
+      }));
+    } catch(e) {}
+  }
+
+  // ── INIT ──
+  async function initApp() {
+    if (!getToken()) {
+      showView('registration');
+      document.getElementById('bottom-nav').style.display = 'none';
+    } else {
+      document.getElementById('bottom-nav').style.display = 'flex';
+      showView('game');
+      updateUI();
+      if (state.pendingReveal) {
+        const { winning, title, detail, winType } = state.pendingReveal;
+        setTimeout(() => openBalloonReveal(winning, title, detail, winType), 700);
+      }
+    }
+  }
+
+  // ── VIEWS ──
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    const nb = document.getElementById('nav-' + name);
+    if (nb) nb.classList.add('active');
+    if (name === 'profile') updateProfileView();
+    if (name === 'leaderboard') updateLeaderboard();
+    if (name === 'payout') updatePayoutView();
+    if (name === 'game') updateGameView();
+  }
+
+  // ── GAME ──
+  function padInput(d) {
+    if (state.currentInput.length >= 3) return;
+    state.currentInput += d;
+    renderDigits();
+    document.getElementById('submit-btn').disabled = state.currentInput.length !== 3 || state.tokens <= 0;
+  }
+  function padDelete() {
+    state.currentInput = state.currentInput.slice(0, -1);
+    renderDigits();
+    document.getElementById('submit-btn').disabled = true;
+  }
+  function padClear() {
+    state.currentInput = '';
+    renderDigits();
+    document.getElementById('submit-btn').disabled = true;
+  }
+  function renderDigits() {
+    for (let i = 0; i < 3; i++) {
+      const box = document.getElementById('d' + i);
+      const ch = state.currentInput[i] || '—';
+      box.textContent = ch;
+      box.classList.toggle('filled', !!state.currentInput[i]);
+    }
+  }
+
+  async function submitGuess() {
+    const g = state.currentInput;
+    if (g.length !== 3 || state.tokens <= 0) return;
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+    try {
+      const idempotency_key = crypto.randomUUID();
+      const data = await api('POST', '/entries', { number: g, idempotency_key });
+      if (!data) return;
+      state.guesses.push(g);
+      state.tokens = data.token_balance ?? state.tokens - 1;
+      state.currentInput = '';
+      renderDigits();
+      updateUI();
+      updateGameView();
+      showToast('Entry ' + g + ' submitted!');
+    } catch(e) {
+      showToast(e.message || 'Submission failed');
+    } finally {
+      btn.textContent = 'Submit Entry';
+      btn.disabled = state.currentInput.length !== 3 || state.tokens <= 0;
+    }
+  }
+
+  function updateGameView() {
+    const section = document.getElementById('entries-section');
+    const list = document.getElementById('entries-list');
+    if (state.guesses.length === 0) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    list.innerHTML = state.guesses.map(g =>
+      `<div class="entry-item"><span class="entry-num">${g}</span><span class="entry-badge">Entered</span></div>`
+    ).join('');
+  }
+
+  // ── DRAW SIMULATION (Test Mode only) ──
+  async function performDraw() {
+    if (state.guesses.length === 0) { showToast('Submit at least one entry first!'); return; }
+    const adminSecret = document.getElementById('tm-admin-secret')?.value || '';
+    if (!adminSecret) { showToast('Enter admin secret in test panel'); return; }
+    try {
+      const res = await fetch(API + '/admin/draw', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-secret': adminSecret,
+          'Authorization': 'Bearer ' + getToken()
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Draw failed');
+      const winning = data.winning_number || '000';
+      const prizes = getPrizes();
+      let title, detail, winType = 'none';
+      for (const guess of state.guesses) {
+        if (guess === winning) {
+          title = `🏆 EXACT MATCH — $${prizes.exact}!`;
+          detail = `The winning number was ${winning}. Your entry matched exactly!`;
+          winType = 'jackpot'; break;
+        } else if ([...guess].sort().join('') === [...winning].sort().join('')) {
+          title = `🎯 ALL DIGITS — $${prizes.anagram}`;
+          detail = `The winning number was ${winning}. Right digits, wrong order.`;
+          winType = 'partial'; break;
+        } else {
+          const matches = guess.split('').filter((c,i) => c === winning[i]).length;
+          if (matches === 2) {
+            title = `✌️ 2 IN PLACE — +1 Token`;
+            detail = `The winning number was ${winning}. 2 digits in position!`;
+            winType = 'token'; break;
+          }
+        }
+      }
+      if (winType === 'none') {
+        title = 'No win this round';
+        detail = `The winning number was ${winning}. Better luck next week!`;
+      }
+      state.guesses = [];
+      await hydrateState();
+      updateUI();
+      updateGameView();
+      openBalloonReveal(winning, title, detail, winType);
+    } catch(e) {
+      showToast(e.message || 'Draw failed');
+    }
+  }
+
+  function getPrizes() {
+    return state.subscription === 'paid'
+      ? { exact: 1000, anagram: 100, tokens: 1 }
+      : { exact: 50, anagram: 5, tokens: 1 };
+  }
+
+  // ── LEADERBOARD ──
+  async function updateLeaderboard() {
+    try {
+      const lb = await api('GET', '/leaderboard');
+      if (lb) state.leaderboard = (lb.leaderboard || lb).map(e => ({ name: e.nickname, prize: e.total_winnings || 0 }));
+    } catch(e) {}
+    const list = document.getElementById('leaderboard-list');
+    const rankClass = ['gold','silver','bronze'];
+    list.innerHTML = state.leaderboard.map((e, i) =>
+      `<div class="leaderboard-item">
+        <div class="lb-rank ${rankClass[i]||''}">${i+1}</div>
+        <div class="lb-name">${e.name}</div>
+        <div class="lb-prize">$${(e.prize||0).toLocaleString()}</div>
+      </div>`
+    ).join('') || `<div class="empty-state">No winners yet. Be the first!</div>`;
+  }
+
+  // ── PROFILE ──
+  async function updateProfileView() {
+    try {
+      const data = await api('GET', '/profile');
+      if (data) {
+        state.totalWinnings = data.total_winnings || 0;
+        state.tokens = data.token_balance ?? state.tokens;
+        state.subscription = data.user?.subscription_status || state.subscription;
+      }
+    } catch(e) {}
+    document.getElementById('profile-name').textContent = state.nickname;
+    document.getElementById('profile-tokens').textContent = state.tokens;
+    document.getElementById('profile-winnings').textContent = '$' + (state.totalWinnings||0).toLocaleString();
+    document.getElementById('profile-bonus').textContent = '$' + (state.referrerBonus||0).toLocaleString();
+    document.getElementById('profile-refcode').textContent = state.myRefCode || '—';
+    const isPaid = state.subscription === 'paid';
+    const upgradeCard = document.getElementById('profile-upgrade-card');
+    const manageSub = document.getElementById('profile-manage-sub');
+    if (upgradeCard) upgradeCard.style.display = isPaid ? 'none' : 'block';
+    if (manageSub) manageSub.style.display = isPaid ? 'block' : 'none';
+  }
+
+  function copyRefCode() {
+    navigator.clipboard?.writeText(state.myRefCode || '').catch(() => {});
+    showToast('Referral code copied!');
+  }
+
+  async function upgradeAccount() {
+    showToast('Stripe subscription coming soon!');
+  }
+
+  async function downgradeAccount() {
+    if (!confirm('Cancel subscription?')) return;
+    showToast('Contact support to cancel your subscription.');
+  }
+
+  // ── PAYOUT ──
+  let selectedPayoutMethod = 'PayPal';
+  function selectPayout(method) {
+    selectedPayoutMethod = method;
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.textContent === method);
+    });
+    document.getElementById('payout-label').textContent = method + ' Email or Username';
+    document.getElementById('payout-detail').placeholder = 'Enter your ' + method + ' info';
+  }
+
+  function updatePayoutView() {
+    document.getElementById('payout-balance').textContent = '$' + (state.totalWinnings||0).toLocaleString();
+    document.getElementById('payout-confirm').style.display = 'none';
+  }
+
+  async function submitPayout() {
+    const detail = document.getElementById('payout-detail').value.trim();
+    if (!detail) { showToast('Please enter your ' + selectedPayoutMethod + ' info'); return; }
+    if ((state.totalWinnings||0) <= 0) { showToast('No balance to withdraw'); return; }
+    try {
+      await api('POST', '/payouts', {
+        method: selectedPayoutMethod.toLowerCase().replace(' ',''),
+        payout_detail: detail
+      });
+      document.getElementById('payout-confirm').style.display = 'block';
+      document.getElementById('payout-confirm').textContent =
+        `✓ Payout request of $${state.totalWinnings.toLocaleString()} submitted via ${selectedPayoutMethod}. We'll process within 3–5 business days.`;
+      state.totalWinnings = 0;
+      updateUI();
+    } catch(e) {
+      showToast(e.message || 'Payout request failed');
+    }
+  }
+
+  // ── COUNTDOWN ──
+  function startCountdownFromDraw(draw) {
+    if (!draw?.week_start) return;
+    const weekStart = new Date(draw.week_start);
+    const nextDraw = new Date(weekStart);
+    nextDraw.setDate(nextDraw.getDate() + 7);
+    document.getElementById('week-num').textContent = '#' + getWeekNumber(weekStart);
+    function tick() {
+      const now = new Date();
+      const diff = nextDraw - now;
+      if (diff <= 0) { document.getElementById('draw-countdown').textContent = 'DRAWING NOW'; return; }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      document.getElementById('draw-countdown').textContent =
+        String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  function getWeekNumber(d) {
+    const oneJan = new Date(d.getFullYear(), 0, 1);
+    return Math.ceil(((d - oneJan) / 86400000 + oneJan.getDay() + 1) / 7);
+  }
+
+  // ── UTILS ──
+  function updateUI() {
+    document.getElementById('header-tokens').textContent = state.tokens;
+    document.getElementById('submit-btn').disabled = state.currentInput.length !== 3 || state.tokens <= 0;
+    const pill = document.getElementById('header-sub-pill');
+    if (pill) {
+      if (state.subscription === 'paid') { pill.textContent = '⭐ PRO'; pill.classList.add('paid'); }
+      else { pill.textContent = 'FREE'; pill.classList.remove('paid'); }
+    }
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  async function resetApp() {
+    if (!confirm('Sign out?')) return;
+    clearToken();
+    state = { nickname:'', subscription:'free', tokens:1, totalWinnings:0, referrerBonus:0, myRefCode:'', guesses:[], drawId:null, currentInput:'', pendingReveal:null, leaderboard:[] };
+    initApp();
+  }
+
+  // ══════════════════════════════════════════
+  // ── TEST MODE ──
+  // ══════════════════════════════════════════
+  const IS_TEST_MODE = new URLSearchParams(window.location.search).get('testmode') === 'true';
+  window.tmForcedOutcome = 'random';
+
+  function tmInit() {
+    if (!IS_TEST_MODE) return;
+    document.getElementById('testmode-bar').classList.add('visible');
+    const demoBtn = document.querySelector('.test-draw-btn');
+    if (demoBtn) demoBtn.style.display = 'none';
+    // Add admin secret input to test panel
+    const tmBody = document.getElementById('tm-body');
+    if (tmBody) {
+      const secretDiv = document.createElement('div');
+      secretDiv.innerHTML = `<div class="tm-section-label">🔑 Admin Secret</div><input id="tm-admin-secret" type="password" placeholder="ADMIN_SECRET value" style="background:#0d0d0d;border:1px solid #222;color:#0f0;padding:7px 10px;font-family:monospace;font-size:0.72rem;border-radius:3px;width:100%;">`;
+      tmBody.appendChild(secretDiv);
+    }
+    tmUpdateStatus();
+  }
+
+  function tmToggle() {
+    const body = document.getElementById('tm-body');
+    const arrow = document.getElementById('tm-arrow');
+    body.classList.toggle('open');
+    arrow.classList.toggle('open');
+  }
+
+  function tmFastForward() { showToast('Draw timing managed server-side'); }
+  function tmResetTimer() { showToast('Draw timing managed server-side'); }
+
+  function tmSetOutcome(outcome) {
+    window.tmForcedOutcome = outcome;
+    ['random','jackpot','partial','token','lose'].forEach(o => {
+      const btn = document.getElementById('tmo-' + o);
+      if (btn) btn.classList.toggle('selected', o === outcome);
+    });
+    const labels = { random:'RANDOM', jackpot:'🏆 JACKPOT', partial:'🎯 PARTIAL', token:'🎟️ TOKEN', lose:'❌ NO WIN' };
+    document.getElementById('tm-forced-label').textContent = labels[outcome] || outcome.toUpperCase();
+  }
+
+  function tmResetWeek() { showToast('Use admin panel to reset draws'); }
+  function tmAddTokens() { showToast('Use admin panel to add tokens'); }
+  function tmSetSub(tier) { showToast('Subscription changes via Stripe'); }
+  function tmClearPending() {
+    state.pendingReveal = null;
+    document.getElementById('balloon-overlay').classList.remove('active');
+    document.getElementById('result-banner').className = 'result-banner';
+    showToast('Pending reveal cleared');
+    tmUpdateStatus();
+  }
+
+  function tmUpdateStatus() {
+    if (!IS_TEST_MODE) return;
+    document.getElementById('tm-token-count').textContent = state.tokens;
+    document.getElementById('tm-entry-count').textContent = state.guesses.length;
+    document.getElementById('tm-real-time').textContent = new Date().toLocaleTimeString();
+    document.getElementById('tm-sim-time').textContent = new Date().toLocaleString();
+    document.getElementById('tm-time-state').innerHTML = '<span class="ok">server time</span>';
+    const freeBtn = document.getElementById('tm-sub-free');
+    const paidBtn = document.getElementById('tm-sub-paid');
+    if (freeBtn) freeBtn.classList.toggle('active', state.subscription !== 'paid');
+    if (paidBtn) paidBtn.classList.toggle('active', state.subscription === 'paid');
+    const pendingEl = document.getElementById('tm-pending-label');
+    if (state.pendingReveal) {
+      pendingEl.innerHTML = '<span class="warn">YES</span>';
+    } else {
+      pendingEl.innerHTML = '<span class="ok">none</span>';
+    }
+  }
+
+  setTimeout(tmInit, 100);
+
+  // ══════════════════════════════════════════
+  // ── BALLOON REVEAL (unchanged from original) ──
+  // ══════════════════════════════════════════
+  const BALLOON_COLORS = [
+    { body: '#ff2d2d', shine: '#ff8080', shadow: '#991a1a' },
+    { body: '#ff8c00', shine: '#ffb84d', shadow: '#994f00' },
+    { body: '#cc2fff', shine: '#e87fff', shadow: '#6e00cc' },
+    { body: '#00b4ff', shine: '#66d9ff', shadow: '#005c8a' },
+    { body: '#00cc66', shine: '#66ffaa', shadow: '#006633' },
+  ];
+
+  function makeBalloonSVG(color, index) {
+    const c = BALLOON_COLORS[index % BALLOON_COLORS.length];
+    const uid = 'bg_' + index + '_' + Date.now();
+    return `<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg" width="100" height="130" style="display:block;overflow:visible;">
+      <defs><radialGradient id="${uid}" cx="35%" cy="30%" r="60%" gradientUnits="objectBoundingBox">
+        <stop offset="0%" stop-color="${c.shine}"/><stop offset="100%" stop-color="${c.shadow}"/>
+      </radialGradient></defs>
+      <ellipse cx="50" cy="58" rx="38" ry="45" fill="url(#${uid})"/>
+      <ellipse cx="36" cy="38" rx="10" ry="14" fill="white" opacity="0.3"/>
+      <polygon points="50,103 45,112 55,112" fill="${c.shadow}"/>
+    </svg>`;
+  }
+
+  let balloonState = { digits:[], popped:[], total:3, winType:'', title:'', detail:'', missed:0 };
+
+  function openBalloonReveal(winning, title, detail, winType) {
+    balloonState = { digits: winning.split(''), popped:[false,false,false], total:3, winType, title, detail, missed:0 };
+    const row = document.getElementById('balloons-row');
+    row.innerHTML = balloonState.digits.map((d, i) => `
+      <div class="balloon-wrap" id="bwrap-${i}" onclick="popBalloon(${i})">
+        <div class="balloon-svg-wrap" id="bsvg-${i}">${makeBalloonSVG(null, i)}</div>
+        <div class="balloon-digit" id="bdigit-${i}" style="color:${BALLOON_COLORS[i % BALLOON_COLORS.length].body}">${d}</div>
+        <div class="balloon-string"></div>
+      </div>`).join('');
+    const card = document.getElementById('reveal-result-card');
+    card.className = 'reveal-result-card';
+    document.getElementById('tap-hint').style.opacity = '1';
+    document.getElementById('confetti-container').innerHTML = '';
+    document.getElementById('balloon-overlay').classList.add('active');
+  }
+
+  function popBalloon(i) {
+    if (balloonState.popped[i]) return;
+    balloonState.popped[i] = true;
+    document.getElementById('bwrap-' + i).classList.add('popped');
+    spawnBurst(document.getElementById('bwrap-' + i), i);
+    const remaining = balloonState.popped.filter(p => !p).length;
+    const hint = document.getElementById('tap-hint');
+    if (remaining === 0) { hint.style.opacity = '0'; setTimeout(() => showRevealResult(), 400); }
+    else hint.textContent = remaining === 1 ? 'One more...' : `${remaining} left — keep going!`;
+  }
+
+  function spawnBurst(wrapEl, colorIdx) {
+    const overlayRect = document.getElementById('balloon-overlay').getBoundingClientRect();
+    const rect = wrapEl.getBoundingClientRect();
+    const cx = rect.left - overlayRect.left + rect.width / 2;
+    const cy = rect.top - overlayRect.top + rect.height * 0.45;
+    const container = document.getElementById('confetti-container');
+    const c = BALLOON_COLORS[colorIdx % BALLOON_COLORS.length];
+    const colors = [c.body, c.shine, '#ffffff', '#ffff00'];
+    for (let p = 0; p < 18; p++) {
+      const el = document.createElement('div');
+      el.className = 'burst-particle';
+      const angle = (p / 18) * 360;
+      const dist = 60 + Math.random() * 80;
+      const tx = Math.cos(angle * Math.PI / 180) * dist + 'px';
+      const ty = Math.sin(angle * Math.PI / 180) * dist + 'px';
+      const size = 6 + Math.random() * 8;
+      el.style.cssText = `left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;background:${colors[p%colors.length]};--tx:${tx};--ty:${ty};animation-duration:${0.5+Math.random()*0.4}s;`;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 1000);
+    }
+  }
+
+  function showRevealResult() {
+    const { title, detail, winType } = balloonState;
+    document.getElementById('reveal-result-title').textContent = title;
+    document.getElementById('reveal-result-detail').textContent = detail;
+    document.getElementById('reveal-missed-banner').classList.remove('show');
+    const card = document.getElementById('reveal-result-card');
+    card.className = 'reveal-result-card show' + (winType === 'jackpot' ? ' win-big' : '');
+    if (winType !== 'none') spawnConfetti(winType === 'jackpot' ? 80 : 40);
+  }
+
+  function spawnConfetti(count) {
+    const container = document.getElementById('confetti-container');
+    const colors = ['#ff2d2d','#FFD700','#00cc66','#00b4ff','#ff8c00','#cc2fff','#ffffff'];
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.cssText = `left:${Math.random()*100}%;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>0.5?'50%':'2px'};animation-duration:${1.8+Math.random()*2}s;`;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 4000);
+      }, i * 40);
+    }
+  }
+
+  function closeReveal() {
+    document.getElementById('balloon-overlay').classList.remove('active');
+    state.pendingReveal = null;
+    const { title, detail, winType } = balloonState;
+    const banner = document.getElementById('result-banner');
+    document.getElementById('result-title').textContent = title;
+    document.getElementById('result-detail').textContent = detail;
+    banner.className = 'result-banner show ' + (winType !== 'none' ? 'win' : 'lose');
+    hydrateState().then(() => updateUI());
+  }
+</script>
+</body>
+</html>
