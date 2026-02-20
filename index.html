@@ -1451,7 +1451,7 @@
   function setToken(t) { localStorage.setItem('numble_token', t); }
   function clearToken() { localStorage.removeItem('numble_token'); }
 
-  async function api(method, path, body) {
+  async function api(method, path, body, isRetry) {
     const headers = { 'Content-Type': 'application/json' };
     const token = getToken();
     if (token) headers['Authorization'] = 'Bearer ' + token;
@@ -1462,11 +1462,43 @@
         body: body ? JSON.stringify(body) : undefined
       });
       const data = await res.json();
-      if (res.status === 401 && path !== '/auth/login' && path !== '/auth/register') { clearToken(); initApp(); return null; }
+      // On 401, try refreshing the token once before logging out
+      if (res.status === 401 && path !== '/auth/login' && path !== '/auth/register') {
+        if (!isRetry) {
+          const refreshed = await tryRefreshToken();
+          if (refreshed) return api(method, path, body, true);
+        }
+        clearToken();
+        localStorage.removeItem('numble_refresh');
+        initApp();
+        return null;
+      }
       if (!res.ok) throw new Error(data.error || data.message || `Request failed (${res.status})`);
       return data;
     } catch(e) {
       throw e;
+    }
+  }
+
+  async function tryRefreshToken() {
+    const refresh = localStorage.getItem('numble_refresh');
+    if (!refresh) return false;
+    try {
+      const res = await fetch(API + '/auth/refresh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refresh })
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (data.token || data.accessToken) {
+        setToken(data.token || data.accessToken);
+        if (data.refreshToken) localStorage.setItem('numble_refresh', data.refreshToken);
+        return true;
+      }
+      return false;
+    } catch(e) {
+      return false;
     }
   }
 
@@ -1539,6 +1571,7 @@
       });
       if (!data) return;
       setToken(data.token || data.accessToken);
+      if (data.refreshToken) localStorage.setItem('numble_refresh', data.refreshToken);
       await hydrateState();
       initApp();
     } catch(e) {
@@ -1556,6 +1589,7 @@
       const data = await api('POST', '/auth/login', { email, password });
       if (!data) return;
       setToken(data.token || data.accessToken);
+      if (data.refreshToken) localStorage.setItem('numble_refresh', data.refreshToken);
       await hydrateState();
       initApp();
     } catch(e) {
